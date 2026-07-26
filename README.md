@@ -15,7 +15,7 @@ numbers I measured.
 ## The starting point
 
 The client had already tried this with off-the-shelf models. A zero-shot
-detector reached 0.113 AP50 on their obstacle classes, and a segmentation
+detector reached 0.113 AP50 on their merged obstacle classes, and a segmentation
 model pretrained on generic scenes could recognise trees but scored 0.000 IoU
 on short grass, so it could not answer the one question a mowing planner asks.
 Their training pipeline also split train and test frames randomly, which leaks
@@ -46,7 +46,7 @@ everything delivered. Detection: RF-DETR Small, fine-tuned after a
 hyperparameter sweep, with offline repeat-factor sampling and augmentation for
 the rare classes. Segmentation: I raced two designs, a frozen DINOv2 backbone
 with a small convolutional head against a fully fine-tuned UPerNet ConvNeXt
-pretrained on an off-road driving dataset, and the frozen-backbone model won
+pretrained on an off-road driving dataset. The frozen-backbone model won
 clearly on held-out streets. Both models beat the client's existing setup by a
 wide margin on data they had never seen.
 
@@ -95,11 +95,11 @@ Measured on streets held out from all training and tuning:
 | Vegetation, present-class mIoU | 0.438 | 0.818 |
 
 The final pipeline processed all 514 pilot frames in 11 minutes on a single
-T4, every frame with its own GPS position. It runs fully deterministic: the
+T4, every frame with its own GPS position. It is fully deterministic: the
 same input produces byte-identical output, which cost 0.005 AP50 against the
-non-deterministic setting and I documented the trade rather than hiding it.
-The delivery included a validation that reproduces the earlier published
-figures under the same settings, a reproducibility proof, install and run
+non-deterministic setting, and I documented the trade rather than hiding it.
+The delivery included a validation that reproduces the figures reported at
+the earlier milestones under the same settings, a reproducibility proof, install and run
 instructions, and a sample input with its exact output so the client can
 verify any installation in one command.
 
