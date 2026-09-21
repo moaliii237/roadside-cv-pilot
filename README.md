@@ -15,7 +15,7 @@ numbers I measured.
 ## The starting point
 
 The client had already tried this with off-the-shelf models. A zero-shot
-detector reached 0.113 AP50 on their merged obstacle classes, and a segmentation
+detector reached 0.113 AP50 on the obstacle classes, and a segmentation
 model pretrained on generic scenes could recognise trees but scored 0.000 IoU
 on short grass, so it could not answer the one question a mowing planner asks.
 Their training pipeline also split train and test frames randomly, which leaks
@@ -32,7 +32,8 @@ fit, after testing and rejecting phase correlation, which underestimates
 forward vehicle motion badly), used that to pick frames with real new content,
 and grouped all footage by GPS location so that training and test data come
 from different streets. I defined the class scheme with the client, wrote the
-annotation guidelines, and annotated boxes and pixel masks myself. One detail
+annotation guidelines, and annotated boxes and pixel masks myself: 99 detection
+frames with 430 boxes, and 47 segmentation frames. One detail
 that mattered: the car bonnet fills almost half of every frame and mirrors the
 sky and trees, so I fitted a curved exclusion polygon and applied it
 identically at training and inference. Measured later, that mask alone is
@@ -91,8 +92,18 @@ Measured on streets held out from all training and tuning:
 
 | | Client's previous setup | Delivered |
 |---|---:|---:|
-| Obstacle detection, merged AP50 | 0.113 | 0.464 |
+| Obstacle detection AP50, same classes | 0.113 | 0.361 |
+| Tree trunks AP50 | 0.125 | 0.821 |
 | Vegetation, present-class mIoU | 0.438 | 0.818 |
+
+On the same classes the delivered detector scores 3.2 times the client's
+zero-shot model, and 6.6 times on tree trunks. The detection test set is 13
+held-out frames with 135 objects, and the vegetation numbers come from 8
+held-out frames, all from locations never used in training. That is a small
+test set, so I report the sample size with every number. With similar
+classes merged into coarser groups, the detector scores 0.464 AP50. I report
+that number separately, because the client's old model was never scored that
+way, so there is no before number to compare it with.
 
 The final pipeline processed all 514 pilot frames in 11 minutes on a single
 T4, every frame with its own GPS position. It is fully deterministic: the
@@ -107,6 +118,19 @@ One number from the map layer that I liked: of the 713 metres of verge
 surveyed, 77 percent was tall grass or herbaceous growth and only 2 percent
 was already mown. That is the question the whole survey exists to answer, and
 it comes out of the pipeline as metres of road, not pixels.
+
+## Checking the answer sheet
+
+After delivery I checked the model a second way, and the two checks
+disagreed. By eye, 77 percent of 112 detections from the live output were
+correct. Scored against my test labels, the same model reached only 50
+percent precision. One model should not give two numbers that far apart, so
+I reviewed every detection the scoring called wrong. Most of them were real
+trees and posts that I had never labelled: 46 real objects were missing from
+the test labels. With the labels corrected, precision at the working
+threshold was 75 percent, in line with the manual check of 112 live
+detections. When two measurements disagree, I now check the labels before I
+blame the model.
 
 ## Stack
 
